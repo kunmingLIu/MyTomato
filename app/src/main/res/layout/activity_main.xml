@@ -23,11 +23,17 @@
         android:layout_height="300dp"
         android:layout_centerInParent="true"/>
 
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/edit"
+        android:layout_below="@id/tomatoClock"
+        android:inputType="number"/>
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="start"
-        android:layout_below="@id/tomatoClock"
+        android:layout_below="@id/edit"
         android:id="@+id/button"/>
 
 </RelativeLayout>
