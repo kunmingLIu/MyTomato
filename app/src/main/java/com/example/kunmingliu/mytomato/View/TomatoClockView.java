@@ -1,10 +1,12 @@
 package com.example.kunmingliu.mytomato.View;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
@@ -16,6 +18,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 
 import com.example.kunmingliu.mytomato.BuildConfig;
 import com.example.kunmingliu.mytomato.Module.GetTimeEvent;
@@ -32,9 +35,8 @@ import static com.example.kunmingliu.mytomato.Utils.Util.log;
  * Created by kunming.liu on 2017/9/13.
  */
 // TODO: 2017/9/13 整理變數名稱
-public class TomatoClockView extends View {
+public class TomatoClockView extends abstractClockView {
     private Paint mPaint = null;
-    private Paint clipPaint = null;
     private int mRadius = 0;
     private int mX = 0;
     private int mY = 0;
@@ -70,6 +72,8 @@ public class TomatoClockView extends View {
     private Path arcPath = null;
     private float distance ;
 
+    private PathMeasure pathMeasure = null;
+
 
 
 
@@ -84,6 +88,7 @@ public class TomatoClockView extends View {
     public TomatoClockView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
+        initAttr(attrs);
     }
 
     private void init() {
@@ -101,16 +106,14 @@ public class TomatoClockView extends View {
 
         mBound = new RectF();
 
-        clipPaint = new Paint();
-        clipPaint.setAntiAlias(true);
-        clipPaint.setColor(Color.WHITE);
-        clipPaint.setStyle(Paint.Style.STROKE);
-        clipPaint.setStrokeWidth(1);
-        setLayerType(LAYER_TYPE_SOFTWARE, clipPaint);
-
         setTestData();
 
-
+        pathMeasure = new PathMeasure();
+    }
+    private void initAttr(AttributeSet attrs){
+        if(attrs == null){
+            return ;
+        }
     }
 
     @Override
@@ -261,7 +264,6 @@ public class TomatoClockView extends View {
             }
 
 
-            //這樣即可畫出扇形，不用搭配line
             //計算目前分針所在的點，要從此點開始畫出番茄工作時間的區間
              stopX = getCosLength(angle , radius-20);
              stopY = getSinLength(angle , radius-20);
@@ -273,163 +275,21 @@ public class TomatoClockView extends View {
             distance = (float)Math.round(Math.sqrt((Math.abs(stopX*stopX)) + Math.abs((stopY*stopY))));
             //有了對角線的半長，就可由圓心推算出矩形的四點座標
             mBound.set(x-distance, y-distance, x+distance, y+distance);
+            //直接在畫面上畫上一個弧
             arcPath.addArc(mBound,angle,sweepAngle);
             mBound.set(x-radius, y-radius, x+radius, y+radius);//外弧
+            //從目前path上的最後一點出發，並畫上一個弧。
+            //因為內弧是用順時針方向去畫弧的，因此外弧如果是由內弧的最後一點開始畫，必須要逆時針畫弧。
+            //因此sweepAngle必須要指定-sweepAngle
             arcPath.arcTo(mBound,endAngle,-sweepAngle);
             arcPath.close();
-            //Util.log("angle , endAngle : %f,%f",angle,endAngle);
-
 
             paint.setColor(mWorkTimeColor);
             paint.setAlpha(200);
             canvas.drawPath(arcPath, paint);
-            //sweepAngle = angle >= sweepAngle ? sweepAngle + 360 - angle : sweepAngle - angle;
-
-//            offsetX1 = getCosLength(angle , mRadius);
-//            offsetY2 = getSinLength(angle , mRadius);
-            //ovalPath.lineTo(mX+offsetX1, mY+offsetY2);
-            //ovalPath.moveTo(mX+offsetX1, mY+offsetY2);//分針所在位置
-
-            //ovalPath.arcTo(mBound,angle,sweepAngle,false);
-
-            //ovalPath.lineTo(mX+offsetX11, mY+offsetY22);
-//            offsetX1 = getCosLength(angle , mRadius);
-//            offsetY2 = getSinLength(angle , mRadius);
-//            //ovalPath.moveTo(mX+offsetX1, mY+offsetY2);//分針所在位置
-//
-////            ovalPath.arcTo(mBound,angle,sweepAngle,false);
-//            sweepAngle = covertMinuteToAngle(workMinute);
-//            Util.log("angle , sweepAngle : %f,%f",angle,sweepAngle);
-////
-//            float temp = sweepAngle;
-//            sweepAngle = angle >= sweepAngle ? sweepAngle + 360 - angle : sweepAngle - angle;
-//
-//            angle = temp;
-//            ovalPath.arcTo(mBound,angle,-sweepAngle);
-//            ovalPath.close();
-//
-//            clipPaint.setColor(Color.YELLOW);
-//            clipPaint.setAlpha(150);
-////            ovalPath.setFillType(Path.FillType.EVEN_ODD);
-////            clipPaint.setShadowLayer(4, 2, 2, 0x80000000);
-////            clipPaint.setFilterBitmap(true);
-//
-//            canvas.drawPath(ovalPath, clipPaint);
-
-
-//
-//            clipPaint.setColor(Color.RED);
-//            clipPaint.setStyle(Paint.Style.STROKE);
-////            canvas.drawRect(mX-mRadius, mY-mRadius, mX+mRadius, mY+mRadius,clipPaint);
-//            canvas.drawRect(mX-distance, mY-distance, mX+distance, mY+distance,clipPaint);
-
-//            clipPaint.setColor(Color.RED);
-//            Path ovalPath1 = new Path();
-//            angle = covertMinuteToAngle(mMinute);
-//            sweepAngle = covertMinuteToAngle(workMinute);
-//            sweepAngle = angle >= sweepAngle ? sweepAngle + 360 - angle : sweepAngle - angle;
-//            mBound.set(mX-mRadius+30, mY-mRadius+30, mX+mRadius-30, mY+mRadius-30);
-//            ovalPath1.moveTo(mX, mY);
-//            ovalPath1.arcTo(mBound,angle,sweepAngle,false);
-
-//            clipPaint.setStrokeWidth(0.1f);
-//            int layerID = canvas.saveLayer(mX-mRadius, mY-mRadius, mX+mRadius, mY+mRadius,clipPaint,Canvas.ALL_SAVE_FLAG);
-//            clipPaint.setColor(Color.BLACK);
-//            canvas.drawPath(ovalPath1, clipPaint);
-//            clipPaint.setColor(Color.RED);
-//            clipPaint.setAlpha(255);
-//            clipPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
-//            canvas.drawPath(ovalPath, clipPaint);
-//
-//            clipPaint.setXfermode(null);
-//
-//            canvas.restoreToCount(layerID);
-//
-//            canvas.save();
-//            canvas.clipPath(ovalPath, Region.Op.INTERSECT);
-//            canvas.clipPath(ovalPath1, Region.Op.DIFFERENCE);
-//            canvas.drawARGB(100,0,255,0);
-//            canvas.restore();
-
-//            //分針
-//            int offsetX1 = getCosLength(angle , mRadius);
-//            int offsetY2 = getSinLength(angle , mRadius);
-//            int offsetX11 = getCosLength(angle , mRadius-30);
-//            int offsetY12 = getSinLength(angle , mRadius-30);
-//            paint.setColor(Color.BLACK);
-//            paint.setStrokeCap(Paint.Cap.BUTT);
-//            paint.setStrokeWidth(3);
-//            canvas.drawLine(mX+offsetX11,mY+offsetY12,mX+offsetX1,mY+offsetY2,paint);
 
 
         }
-    }
-
-    /**
-     * 必須要加上圓心座標，才是該點真正的座標
-     * @param angle
-     * @param length
-     * @return
-     */
-    private int getSinLength(float angle, int length) {
-        double sin = Math.sin(Math.toRadians(angle));
-        return (int) ((float) length * sin);
-    }
-    /**
-     * 必須要加上圓心座標，才是該點真正的座標
-     * @param angle
-     * @param length
-     * @return
-     */
-    private int getCosLength(float angle, int length) {
-        double cos = Math.cos(Math.toRadians(angle));
-        return (int) ((float) length * cos);
-    }
-
-    /**
-     * 計算X分鐘在時鐘上的角度
-     * @param minute 0~59
-     * @return
-     */
-    private float covertMinuteToAngle(int minute) {
-        //因為把15分鐘的時刻方向當作是0度開始計算，且逆時針方向為正(因此0~14分鐘都是負值)
-        // 十 0
-        // 90
-        //圓360度，然後分成四部分
-        //時鐘上0~15的刻度剛好是直角，所以是90度，可推算出每5分鐘的刻度共佔30度；
-        //因此可以推算出每分鐘刻度一共佔30*(5)=6
-        /*
-        如果傳入的是55分，那所佔的角度是55*6=330；但是這是以12點鐘方向為0度去算的
-        我們是要從15分鐘的方向為0度去算，因此必須要扣掉12點鐘到15分鐘的方向的夾角值90(15*6)度
-        因此，我們可以推出公式=(55-15)*6 = 240
-         */
-        float angle = (minute - 15) * 6;
-        if (angle < 0) {
-            angle = angle + 360;
-        }
-        return angle;
-    }
-    /**
-     * 計算X時Y分在時鐘上的角度
-     * @param hour 0~11
-     * @param minute 0~59
-     * @return
-     */
-    private float covertHourToAngle(int hour, int minute) {
-        //因為把3點方向當作是0度開始計算，且逆時針方向為正(因此0~2點都是負值)
-        // 十 0
-        // 90
-        //計算邏輯與算分鐘角度相同
-        float angle = (hour - 3) * 30;
-        if (angle < 0) {
-            angle = angle + 360;
-            //從上一小時一共要走5小格才會到下一個小時，因此可以算出每12分鐘要前進一小格
-            //因此要針對時針的角度再做調整
-            angle = angle + (minute / 12) * 6;
-        } else {
-            angle = angle + (minute / 12) * 6;
-        }
-        return angle;
     }
 
     public void setCurrentTime() {
@@ -437,7 +297,7 @@ public class TomatoClockView extends View {
         mHour = cal.get(Calendar.HOUR);
         mMinute = cal.get(Calendar.MINUTE);
         mSecond = cal.get(Calendar.SECOND);
-        invalidate();
+        postInvalidate();
     }
 
     //    //todo 沒效果，而且如果我不再activity去訂閱的話，會報錯
@@ -504,5 +364,4 @@ public class TomatoClockView extends View {
          */
         return startAngle >= endAngle ? endAngle + 360 - startAngle : endAngle - startAngle;
     }
-
 }

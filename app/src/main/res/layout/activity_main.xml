@@ -17,7 +17,7 @@
         android:text="00:25"
         android:layout_above="@+id/tomatoClock" />
 
-    <com.example.kunmingliu.mytomato.View.TomatoClockView
+    <com.example.kunmingliu.mytomato.View.TomatoClockViewWithPath
         android:id="@+id/tomatoClock"
         android:layout_width="300dp"
         android:layout_height="300dp"

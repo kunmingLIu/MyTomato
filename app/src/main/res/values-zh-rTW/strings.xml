@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MyTomato</string>
+    <string name="am">上午</string>
+    <string name="pm">下午</string>
+</resources>

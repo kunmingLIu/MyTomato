@@ -5,16 +5,19 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.kunmingliu.mytomato.Dialog.ClockDialogFragment;
 import com.example.kunmingliu.mytomato.Module.GetTimeEvent;
 import com.example.kunmingliu.mytomato.Module.TimerEvent;
 import com.example.kunmingliu.mytomato.Service.GetTimeService;
 import com.example.kunmingliu.mytomato.Service.TimerService;
 import com.example.kunmingliu.mytomato.View.TomatoClockView;
+import com.example.kunmingliu.mytomato.View.TomatoClockViewWithPath;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -25,13 +28,14 @@ import java.util.Calendar;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import android.support.v4.app.Fragment;
 
 import static com.example.kunmingliu.mytomato.Utils.Util.log;
 
 public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.tomatoClock)
-    TomatoClockView tomatoClock;
+    TomatoClockViewWithPath tomatoClock;
     @BindView(R.id.textView)
     TextView textView;
     @BindView(R.id.button)
@@ -90,10 +94,13 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 //        valueAnimator.start();
-        if(!TextUtils.isEmpty(edit.getText().toString())){
-            int workMin = Integer.parseInt(edit.getText().toString());
-            tomatoClock.startWork(0,workMin,0);
-        }
+
+            //測試tomatoClock
+//        if(!TextUtils.isEmpty(edit.getText().toString())){
+//            int workMin = Integer.parseInt(edit.getText().toString());
+//            tomatoClock.startWork(0,workMin,0);
+//        }
+        showEditDialog();
 
     }
 
@@ -110,6 +117,12 @@ public class MainActivity extends AppCompatActivity {
     public void subscribeTimerEvent(TimerEvent event) {
         log("timerTimeOut");
         Toast.makeText(MainActivity.this, "倒數結束拉", Toast.LENGTH_SHORT).show();
+    }
+
+    public void showEditDialog()
+    {
+        ClockDialogFragment editNameDialog = new ClockDialogFragment();
+        editNameDialog.show(getSupportFragmentManager(), "EditNameDialog");
     }
 
 }
