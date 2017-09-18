@@ -141,6 +141,8 @@ public class TomatoClockViewWithPath extends abstractClockView {
         hourPos = new float[2];
         minutePos = new float[2];
         secondPos = new float[2];
+
+        arcPath = new Path();
     }
     private void initAttr(AttributeSet attrs){
         if(attrs == null){
@@ -275,10 +277,37 @@ public class TomatoClockViewWithPath extends abstractClockView {
             canvas.drawLine(innerPos[0], innerPos[1], clockPos[0], clockPos[1], mPaint);
         }
     }
-
-    //// TODO: 2017/9/13 小時跟秒還沒有考慮  思考arcTo addArc
     private void drawWorkTime(Canvas canvas,int x , int y,  int radius, int startWorkHour, int startWorkMin, int startWorkSec,
                               int endWorkHour, int endWorkMin,int endWorkSec,Paint paint) {
+
+        if (endWorkHour >= 0 || endWorkMin >= 0 || endWorkSec >= 0) {
+            paint.setStrokeWidth(3);
+            paint.setStyle(Paint.Style.FILL);
+
+            setArcPath(startWorkMin,startWorkMin+8,mInnerRadius,mRadius,false);
+
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setColor(mWorkTimeColor);
+            paint.setAlpha(200);
+            canvas.drawPath(arcPath, paint);
+
+//            arcPath.reset();
+            setArcPath(startWorkMin+8,endWorkMin,mInnerRadius,mRadius,true);
+            //arcPath.close();
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(mWorkTimeColor);
+            paint.setAlpha(200);
+            canvas.drawPath(arcPath, paint);
+
+            paint.setStyle(Paint.Style.STROKE);
+            canvas.drawPath(arcPath, paint);
+
+        }
+    }
+
+    //// TODO: 2017/9/18 某些角度下是正常的，但是某些角度下取的交集的時候，圖形會不正常
+    private void drawWorkTimeWithPath(Canvas canvas,int x , int y,  int radius, int startWorkHour, int startWorkMin, int startWorkSec,
+                                      int endWorkHour, int endWorkMin,int endWorkSec,Paint paint) {
 
         /*
         這段遇到的最大問題就是一開始問題是想要用drawArc跟drawLine去畫出圖形，雖然是做到了，但是無法塗滿顏色。
@@ -290,8 +319,8 @@ public class TomatoClockViewWithPath extends abstractClockView {
         最後最後，在stackFlow上看到有人也是畫弧線，但是成功上色了～後來就去研究，發現是我arcTo跟addArc濫用的關係，
         導致上色會變得很詭異。
          */
-        Util.log("endWorkMin = %d ",endWorkMin);
-        Util.log("startWorkMin = %d ",startWorkMin);
+//        Util.log("endWorkMin = %d ",endWorkMin);
+//        Util.log("startWorkMin = %d ",startWorkMin);
         if (endWorkHour >= 0 || endWorkMin >= 0 || endWorkSec >= 0) {
             angle = covertMinuteToAngle(startWorkMin);
             endAngle = covertMinuteToAngle(startWorkMin+10);
@@ -313,6 +342,8 @@ public class TomatoClockViewWithPath extends abstractClockView {
             //然後再擷取0到endArcLength
             angle = covertMinuteToAngle(startWorkMin);
             endAngle = covertMinuteToAngle(startWorkMin+25);
+            Util.log("angle = %f ",angle);
+            Util.log("endAngle = %f ",endAngle);
             float startArcLength = (float)Math.toRadians(angle)*mInnerRadius;
             float endArcLength = (float)Math.toRadians(endAngle)*mInnerRadius;
             Util.log("startArcLength = %f ",startArcLength);
@@ -331,36 +362,57 @@ public class TomatoClockViewWithPath extends abstractClockView {
             innerPathMeasure.getPosTan(endArcLength,pos1,null);
 
             Path path = new Path();
-            path.addPath(arcPath);
+//            path.addPath(arcPath);
 
-            arcPath.reset();//key point
+//            arcPath.reset();//key point
+            angle = covertMinuteToAngle(startWorkMin);
+            endAngle = covertMinuteToAngle(startWorkMin+25);
+            Util.log("angle1 = %f ",angle);
+            Util.log("endAngle1 = %f ",endAngle);
             startArcLength = (float)Math.toRadians(angle)*mRadius;
             endArcLength = (float)Math.toRadians(endAngle)*mRadius;
-            Util.log("startArcLength = %f ",startArcLength);
-            Util.log("endArcLength = %f ",endArcLength);
-            if(endArcLength < startArcLength){
-                clockPathMeasure.getSegment(startArcLength,clockPathMeasure.getLength(),arcPath,true);
-                clockPathMeasure.getSegment(0,endArcLength,arcPath,true);
-            }
-            else{
-                clockPathMeasure.getSegment(startArcLength,endArcLength,arcPath,true);
-            }
-            path.addPath(arcPath);
-            arcPath.reset();
+            Util.log("startArcLength1 = %f ",startArcLength);
+            Util.log("endArcLength1 = %f ",endArcLength);
+
+            //arcPath.addPath(path);
+
+//            arcPath.reset();
             float[] pos2 = new float[2];
             float[] pos3 = new float[2];
             clockPathMeasure.getPosTan(startArcLength,pos2,null);
             clockPathMeasure.getPosTan(endArcLength,pos3,null);
+
             path.moveTo(pos[0],pos[1]);
-            path.lineTo(pos2[0],pos2[1]);
-            path.moveTo(pos1[0],pos1[1]);
-            path.lineTo(pos3[0],pos3[1]);
-            path.close();
-            path.setFillType(Path.FillType.EVEN_ODD);
+            if(endArcLength < startArcLength){
+                clockPathMeasure.getSegment(startArcLength,clockPathMeasure.getLength(),path,false);
+                clockPathMeasure.getSegment(0,endArcLength,path,false);
+            }
+            else{
+                clockPathMeasure.getSegment(startArcLength,endArcLength,path,false);
+            }
+//            arcPath.moveTo(pos2[0],pos2[1]);
+//            path.moveTo(pos[0],pos[1]);
+//            path.lineTo(pos2[0],pos2[1]);
+//            arcPath.moveTo(pos1[0],pos1[1]);
+//            arcPath.lineTo(pos3[0],pos3[1]);
+//            arcPath.close();
+            arcPath.addPath(path);
+            path.reset();
+
+            arcPath.setFillType(Path.FillType.EVEN_ODD);
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(mWorkTimeColor);
             paint.setAlpha(200);
-            canvas.drawPath(path, paint);
+            canvas.drawPath(arcPath, paint);
+            //canvas.drawPath(path, paint);
+
+            paint.setColor(Color.BLACK);
+            paint.setAlpha(255);
+            paint.setStrokeWidth(5);
+            canvas.drawPoint(pos[0],pos[1],paint);
+            canvas.drawPoint(pos1[0],pos1[1],paint);
+            canvas.drawPoint(pos2[0],pos2[1],paint);
+            canvas.drawPoint(pos3[0],pos3[1],paint);
 
 
 
@@ -423,7 +475,8 @@ public class TomatoClockViewWithPath extends abstractClockView {
         mHour = cal.get(Calendar.HOUR);
         mMinute = cal.get(Calendar.MINUTE);
         mSecond = cal.get(Calendar.SECOND);
-        postInvalidate();
+//        Util.log("mSecond = %d ", mSecond);
+        //postInvalidate();
     }
 
     //    //todo 沒效果，而且如果我不再activity去訂閱的話，會報錯
@@ -517,6 +570,7 @@ public class TomatoClockViewWithPath extends abstractClockView {
                     secondPathMeasure.getPosTan(arcLength+(float)animation.getAnimatedValue(),secondPos,null);
                 }
 
+
                 postInvalidate();
             }
         });
@@ -538,5 +592,29 @@ public class TomatoClockViewWithPath extends abstractClockView {
             }
         });
         valueAnimator.start();
+    }
+
+    private void setArcPath(int startTime, int endTime,int innerRadius, int radius , boolean isFill){
+        arcPath.reset();
+        angle = covertMinuteToAngle(startTime);
+        endAngle = covertMinuteToAngle(endTime);
+        sweepAngle = getSweepAngle(angle,endAngle);
+        //計算目前分針所在的點，要從此點開始畫出番茄工作時間的區間
+        stopX = getCosLength(angle , innerRadius);
+        stopY = getSinLength(angle , innerRadius);
+        distance = (float)Math.round(Math.sqrt((Math.abs(stopX*stopX)) + Math.abs((stopY*stopY))));
+        mBound.set(-distance, -distance, distance, distance);
+        if(!isFill){
+            arcPath.moveTo(stopX,stopY);
+            stopX = getCosLength(angle , mRadius);
+            stopY = getSinLength(angle , mRadius);
+            arcPath.lineTo(stopX,stopY);
+        }
+        arcPath.addArc(mBound,angle,sweepAngle);
+        mBound.set(-radius, -radius, radius, radius);//外弧
+        if(isFill) {
+            arcPath.arcTo(mBound, endAngle, -sweepAngle);
+            arcPath.close();
+        }
     }
 }
